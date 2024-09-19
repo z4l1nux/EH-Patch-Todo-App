@@ -1,4 +1,4 @@
-name: Snyk Security Scan
+name: Trivy Security Scan
 
 on:
   push:
@@ -7,15 +7,21 @@ on:
   pull_request:
 
 jobs:
-  security_scan:
+  trivy_scan:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install Snyk CLI
-        run: npm install -g snyk
+      - name: Install Trivy
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update -y
+          sudo apt-get install -y trivy
 
-      - name: Run Snyk Open Source (SCA) scan
-        run: snyk test --severity-threshold=high || true
+      - name: Run Trivy on file system
+        run: trivy fs --severity HIGH,CRITICAL .
